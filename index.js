@@ -18,6 +18,7 @@ const {
 const express = require("express");
 var bodyParser = require("body-parser");
 var cors = require("cors");
+
 const process = require("process");
 
 const STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;

