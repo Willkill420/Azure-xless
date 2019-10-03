@@ -1,12 +1,30 @@
-// Xless: The Serverlesss Blind XSS App.
-// Version: v1.1
-// Author: Mazin Ahmed <mazin@mazinahmed.net>
+// Based on Xless: The Serverlesss Blind XSS App.
+// Version: v1.2
+// Original Author: Mazin Ahmed <mazin@mazinahmed.net>
+
+// process.env.AZURE_STORAGE_ACCOUNT_NAME;
+// process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
+// 
+
+const {
+  Aborter,
+  BlockBlobURL,
+  ContainerURL,
+  ServiceURL,
+  SharedKeyCredential,
+  StorageURL,
+} = require('@azure/storage-blob');
 
 const express = require("express");
 var bodyParser = require("body-parser");
 var cors = require("cors");
 const process = require("process");
-var request = require("request");
+
+const STORAGE_ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
+const ACCOUNT_ACCESS_KEY = process.env.AZURE_STORAGE_ACCOUNT_ACCESS_KEY;
+const containerName = "xsshits";
+const ONE_MINUTE = 60 * 1000;
+
 
 const port = process.env.PORT || 3000;
 
@@ -49,6 +67,22 @@ function generate_callback_alert(headers, data, url) {
   return(alert)
 }
 
+function prep_and_store(alert){
+
+  const credentials = new SharedKeyCredential(STORAGE_ACCOUNT_NAME, ACCOUNT_ACCESS_KEY);
+  const pipeline = StorageURL.newPipeline(credentials);
+  const serviceURL = new ServiceURL(`https://${STORAGE_ACCOUNT_NAME}.blob.core.windows.net`, pipeline);
+  const containerURL = ContainerURL.fromServiceURL(serviceURL, containerName);
+
+  var blobName = (new Date().getTime().toString()+ ".json");
+
+  const blockBlobURL = BlockBlobURL.fromContainerURL(containerURL, blobName);
+
+  const aborter = Aborter.timeout(30 * ONE_MINUTE);
+
+  blockBlobURL.upload(aborter, content, content.length);
+}
+
 
 app.get("/examples", (req, res) => {
   res.header("Content-Type", "text/plain")
@@ -69,13 +103,11 @@ app.get("/examples", (req, res) => {
 app.post("/c", (req, res) => {
     var data = req.body
     data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
+    
     const alert = generate_blind_xss_alert(data)
-    data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
-
-    request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
-      res.send("ok\n")
-      res.end()
-    });
+    prep_and_store(JSON.stringify(alert))
+    res.send("ok\n")
+    res.end()
 })
 
 
@@ -83,13 +115,12 @@ app.get("/*", (req, res) => {
   var headers = req.headers
   var data = req.body
   data["Remote IP"] = req.headers["x-forwarded-for"] || req.connection.remoteAddress
+  
+  
   const alert = generate_callback_alert(headers, data, req.url)
-  data = {form: {"payload": JSON.stringify({"username": "XLess", "mrkdwn": true, "text": alert}) }}
-
-  request.post(process.env.SLACK_INCOMING_WEBHOOK, data, (out)  => {
-    res.send("ok\n")
-    res.end()
-  });
+  prep_and_store(JSON.stringify(alert))
+  res.send("ok\n")
+  res.end()
 })
 
 
