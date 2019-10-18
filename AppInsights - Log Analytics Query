@@ -1,0 +1,14 @@
+let data = traces
+| where message contains "XSS FOUND - {"
+| project all_fields = parse_json(trim_start("XSS FOUND - ", message));
+data 
+| extend Browser_Time = all_fields['Browser Time']
+| extend Cookies = all_fields['Cookies']
+| extend DOM = all_fields['DOM']
+| extend Location = all_fields['Location']
+| extend Origin = all_fields['Origin']
+| extend Referrer = all_fields['Referrer']
+| extend User_Agent = all_fields['User-Agent']
+| extend localStorage = all_fields['localStorage']
+| extend sessionStorage = all_fields['sessionStorage']
+| project-away all_fields
