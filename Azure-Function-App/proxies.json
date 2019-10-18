@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json.schemastore.org/proxies",
+    "proxies": {
+        "Payload Proxy": {
+            "matchCondition": {
+                "route": "/{*catchAll}"
+            },
+            "backendUri": "https://localhost/api/xsspayload"
+        },
+        "storeEndpoint": {
+            "matchCondition": {
+                "route": "/c",
+                "methods": [
+                    "POST"
+                ]
+            },
+            "backendUri": "https://localhost/api/storePayload"
+        }
+    }
+}
